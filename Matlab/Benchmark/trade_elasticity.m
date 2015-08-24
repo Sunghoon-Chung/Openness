@@ -19,9 +19,9 @@ yy     = yyold;
 ee = (1/gamma*(1-omega) + 1/theta*omega).^(-1); %% cournot
 %ee  = (gamma*(1-omega)+theta*omega);             %% bertrand
 
-pp  = tariff.*ee./(ee-1)./aa;
+pp  = ee./(ee-1)./(aa.*tariff);
 
-profit = (pp./tariff - 1./aa).*yy - [FD*ones(N,S); FX*ones(N,S)];
+profit = (tariff.*pp - 1./aa).*yy - [FD*ones(N,S); FX*ones(N,S)];
 
 
 if it < 50    

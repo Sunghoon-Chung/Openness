@@ -19,7 +19,7 @@ as = [a(:, S+1:end), a(:,1:S)];
 
 % Impose tariff
 
-tariff=[ones(size(a)); [repmat(tar(ads_id)',N,1), ones(N,S)]]; 
+tariff=[ones(size(a)); [1-repmat(tar(ads_id)',N,1), ones(N,S)]]; % 1-tariff
 
 
 % Ordering productivity from highest to lowest within each sector
@@ -33,7 +33,7 @@ S  = S*2;
 
 aa = [a; as./(1+tau)]; 
 
-pp  = tariff.*gamma/(gamma-1)./aa;
+pp  = gamma/(gamma-1)./(aa.*tariff);
 
 Pj  = (mean(2*pp.^(1-gamma))).^(1/(1-gamma));
 P   = (mean(Pj.^(1-theta))).^(1/(1-theta));
@@ -58,9 +58,9 @@ omega  = omegaold;
 yy     = yyold;
 
 ee = (1/gamma*(1-omega) + 1/theta*omega).^(-1); 
-pp  = tariff.*ee./(ee-1)./aa;
+pp  = ee./(ee-1)./(aa.*tariff);
 
-profit = (pp - 1./aa).*yy - [FD*ones(N,S); FX*ones(N,S)];
+profit = (tariff.*pp - 1./aa).*yy - [FD*ones(N,S); FX*ones(N,S)];
 
 if it < 50    
   
@@ -108,7 +108,7 @@ if norm(omega-omegaold)>1e-3
     disp('Warning: omega has not converged')
 end
 
-mu  = ee./(ee-1); 
+mu  = ee./(ee-1)./tariff;  
 
 % Naive Trade Elasticity (fix measures of producers)
 
@@ -212,8 +212,15 @@ intraindex = 1 - mean(sj(ttrade>0)'.*abs(impshare(ttrade>0)-expshare(ttrade>0)).
 
 % losses from misallocation
 
-Ajeff = mean(2*phi.*aa.^(gamma-1)).^(1/(gamma-1)); 
-Aeff = mean(Ajeff.^(theta-1)).^(1/(theta-1)); 
+% just use the same formulas as before but with different prices
+ppe             = 1./(aa.*tariff);  % we now assume all firms charge a constant markup, here normalized to 1 since mean irrelevant
+Pje             = mean(2*phi.*ppe.^(1-gamma)).^(1/(1-gamma));
+Pje(isinf(Pje)) = 10^16;
+Pe              = mean(Pje.^(1-theta)).^(1/(1-theta));
+
+yye   = bsxfun(@times, ppe.^(-gamma), Pje.^(gamma-theta).*Pe.^theta); 
+Aeff  = mean(mean(2*phi.*aa.^(-1).*yye)).^(-1);                         
+
 
 sshare = (Pj./P).^(1-theta); sshare = sshare';
 
@@ -234,7 +241,6 @@ fprintf('domestic markup   = %7.3f \n', mudom);
 fprintf('import   markup   = %7.3f \n', mufor);
 fprintf('\n');
 fprintf('import share      = %7.3f \n', impshare);
-fprintf('intra-trade       = %7.3f \n', intraindex);
 fprintf('exporter share    = %7.3f \n', agg_fexporters);  
 fprintf('trade elasticity  = %7.3f \n', sigma);
 fprintf('\n');

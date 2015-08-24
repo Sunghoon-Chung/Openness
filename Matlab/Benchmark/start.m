@@ -4,18 +4,28 @@ rng('default');
 
 % Assigned Parameters and raw data
 
-year = 2005; 
+year=1973;
 
+timevarying = 0;
+if timevarying==1
+    if     year==1970,  b1 = -0.1225;   b0 = 0.6291;   % slope coefficient and intercept in regression of inverse markups on market shares
+    elseif year==1973,  b1 = -0.1613;   b0 = 0.6693;
+    elseif year==1980,  b1 = -0.1361;   b0 = 0.7235;
+    elseif year==1990,  b1 = -0.1454;   b0 = 0.7482;
+    elseif year==2003,  b1 = -0.2026;   b0 = 0.7670;
+    elseif year==2005,  b1 = -0.1889;   b0 = 0.7922;
+    end
+else b1= -0.1454; b0= 0.7482;
+end
+    
+    
 io_data = strcat('D:\Copy\Openness\Analysis\Matlab\io_data_',num2str(year),'.mat');
 load(io_data)
-
-b1 = -0.1092;       % slope coefficient and intercept in regression of inverse markups on market shares
-b0 = 0.6838;
 
 S = n_sector(1);
 
 %gamma = 1/(1-b0);                                    % within-sector elasticity of substitution   
-gamma = 8.335;
+gamma = 10;
 theta = (1/gamma - b1/b0*(1-1/gamma))^(-1);     % across-sector elasticity of substitution
 
 L  = 1;            % inelastic labor supply in Home
@@ -32,7 +42,7 @@ tariff = 1;        % 1 if yes, 0 if no
 FD    = 0;                                  % fixed cost of domestic operations
 FX    = 0;                                  % fixed cost of export operations
 
-tau   = 0.13;                                  % net trade cost 
+tau   = 0.12;                                  % net trade cost 
 
 
 tausave  = tau;   % save since need later
@@ -71,7 +81,4 @@ equilibrium;
 %model_moments;
 %markup_moments;
 %domestic_and_import_markups;         
-     
-scatter(omegaH(1:S), muH(1:S));
-scatter(wds, mud);        
 

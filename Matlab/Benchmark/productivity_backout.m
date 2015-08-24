@@ -8,9 +8,9 @@ mud = mu;
 muf = ((gamma-1)/gamma - (1/theta - 1/gamma).*wfs).^(-1);
 
 if tariff==1
-    tar = 1+ot;                 % tariff rate
+    tar = ot;                 % tariff rate
 else
-    tar = ones(S,N);
+    tar = zeros(S,N);
 end
 
 
@@ -25,7 +25,7 @@ afs = ones(S,1);
 for i = 1:500
 
     ads_new = mud.*wds.^(1/(gamma-1))./(ws.*mean((mud.*wds.^(1/(gamma-1))./ads).^(1-theta))).^(1/(1-theta));
-    afs_new = tar.*muf.*wfs.^(1/(gamma-1))./(ws.*mean((tar.*muf.*wfs.^(1/(gamma-1))./afs).^(1-theta))).^(1/(1-theta));
+    afs_new = (1./(1-tar).*muf.*wfs.^(1/(gamma-1)))./(ws.*mean(muf.*wfs.^(1/(gamma-1))./(afs.*(1-tar))).^(1-theta)).^(1/(1-theta));
     error = norm([ads_new-ads, afs_new-afs]);        %% norm() = Euclidean norm
     %fprintf('%4i %6.2e \n',[i, error]);
 
@@ -46,10 +46,12 @@ scatter(ads, afs);
 
 %% Method 2
 
-histogram(ads);
+ksdensity(ads);
+xlabel('Domestic Productivity');
 ads_param = mle(ads, 'distribution', 'Lognormal');
 afs = lognrnd(ads_param(1), ads_param(2), S,1);
-histogram(afs);
+ksdensity(afs);
+xlabel('Foreign Productivity');
 
 [adss, ads_id] = sort(ads, 1, 'descend');
 [afss, afs_id] = sort(afs, 1, 'descend');
