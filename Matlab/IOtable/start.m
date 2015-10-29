@@ -19,7 +19,7 @@ else b1= -0.1454; b0= 0.7482;
 end
     
     
-io_data = strcat('D:\Copy\Openness\Analysis\Matlab\io_data_',num2str(year),'.mat');
+io_data = strcat('D:\Copy\Openness\Analysis\Matlab\IOtable\io_data_',num2str(year),'.mat');
 load(io_data)
 
 S = n_sector(1);

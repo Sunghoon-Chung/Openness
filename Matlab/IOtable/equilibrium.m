@@ -10,16 +10,11 @@ as = afss;
 a  = reshape(a, N, S);
 as = reshape(as, N, S);
 
-
-% MAKE COUNTRIES PERFECTLY SYMMETRIC: Drop 1/2 observations, switch around
-
-a  = [a, as];
-as = [a(:, S+1:end), a(:,1:S)];
-
+% I didn't follow the EMX who made H & F countries perfectly symmetric. Rather, I assume that the F country draws
+% a random productivity from a log-normal dist. (with two parameters) that can generate the actual dist. of H industry.
 
 % Impose tariff
-
-tariff=[ones(size(a)); [1-repmat(tar(ads_id)',N,1), ones(N,S)]]; % 1-tariff
+tariff=[ones(size(a)); [1-repmat(tar(ads_id)',N,1)]]; % 1-tariff
 
 
 % Ordering productivity from highest to lowest within each sector
@@ -28,8 +23,6 @@ as = sort(as, 1, 'descend');
 
 
 % initial guess: economy with p = gamma/(gamma-1)*W/a
-
-S  = S*2;
 
 aa = [a; as./(1+tau)]; 
 
@@ -246,9 +239,7 @@ fprintf('trade elasticity  = %7.3f \n', sigma);
 fprintf('\n');
 
 
-
 clear a as
-S = S/2;
 
 
 
