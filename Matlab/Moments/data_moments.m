@@ -1,11 +1,27 @@
 
-clc;
-clear all;
-close all;
+fprintf('...calculating data moments... \n');
 
-load product_dsales_1983;
+%%%%% load in daniel's data
 
-fprintf('...calculating data moments... \n');  %% '\n': go to the next line
+T = 4;                             %% four years of data
+
+data = cell(T,1);                  %% cell to store all the raw data
+
+load data_89.mat;                  %% matrix where each row is a sector
+
+data{1,1} = datam'; clear datam;   %% matrix where each column is a sector
+
+load data_91.mat; 
+
+data{2,1} = datam'; clear datam;
+
+load data_92.mat; 
+
+data{3,1} = datam'; clear datam;
+
+load data_93.mat; 
+
+data{4,1} = datam'; clear datam;
 
 
 HH = []; Highest_Share = []; 
@@ -13,42 +29,43 @@ HH = []; Highest_Share = [];
 Share = []; Share90 = []; Share75 = []; Share50 = []; Share25 = []; Share10 = [];
 Sdshare = []; Ndom = []; IndustryIHH = []; IndustryTop = []; Sales = []; Sales_s = [];
 
+for t=1:T,
+    
+    data_t = data{t,1};
+    
+    [NN,SS] = size(data_t);  
 
-data = dsales';                      %% each column in data is a sector
+    data_t(isinf(data_t))=NaN; %% replace all "inf" with "nan"
+
+    sales        = data_t;
+    
+    sales_s      = nansum(sales); 
+    sector_sales = repmat(sales_s,NN,1);
+
+    sharedom       = data_t./sector_sales;
      
-[NN,SS] = size(data);                %% NN = max # of producers, SS = # of sectors
-
-data(isinf(data))=NaN;               %% replace all "inf" with "nan"
-
-sales        = data;
-
-sales_s      = nansum(sales);            %% column sum excluding NaN cells --> total sales of each sector
-sector_sales = repmat(sales_s,NN,1);     %% replicate sales_s by NN rows and 1 columns
-
-sharedom       = data./sector_sales;
-
-hh            = nansum(sharedom.^2);     %% sector level HH
-highest_share = max(sharedom);
-
-share = sharedom(:)';                    %% reshape 'share' into a row vector
-
-for s = 1:SS,
-
-    share90(s)          = prctile(sharedom(:,s),90);    %% 90 percentile share for each sector
-    share75(s)          = prctile(sharedom(:,s),75);
-    share50(s)          = prctile(sharedom(:,s),50);
-    share25(s)          = prctile(sharedom(:,s),25);
-    share10(s)          = prctile(sharedom(:,s),10);
-
-    sdshare(s)          = nanstd(sharedom(:,s));
-
-    inversehh(s)        = 1./nansum(sharedom(:,s).^2);  %% sector level inverse HH
-
-    topshare(s)         = max(sharedom(:,s));
-
-    ndom(s)             = sum(~isnan(sharedom(:,s)));
-
-end
+    hh            = nansum(sharedom.^2);
+    highest_share = max(sharedom);
+ 
+    share = sharedom(:)';
+    
+    for s = 1:SS,
+        
+        share90(s)          = prctile(sharedom(:,s),90);
+        share75(s)          = prctile(sharedom(:,s),75);
+        share50(s)          = prctile(sharedom(:,s),50);
+        share25(s)          = prctile(sharedom(:,s),25);
+        share10(s)          = prctile(sharedom(:,s),10);
+        
+        sdshare(s)          = nanstd(sharedom(:,s));
+        
+        inversehh(s)        = 1./nansum(sharedom(:,s).^2);
+        
+        topshare(s)         = max(sharedom(:,s));
+        
+        ndom(s)             = sum(~isnan(sharedom(:,s)));
+            
+    end
   
     
     %%%%% pool all 4 years into one big data set
@@ -72,13 +89,12 @@ end
     
     Sales         = [Sales  , sales(sales>0)'];
     Sales_s       = [Sales_s, sales_s];
-
-    clear share90 share75 share50 share25 share10 sdshare ndom inversehh topshare
-
+    
+end
 
 % Blocks are to make it easier to move them around if required
 
-% Block #1: Table 1. Panel A. upper left column
+% Block #1
 
 meaninvHH      = nanmean(1./HH); 
 medianinvHH    = nanmedian(1./HH);
@@ -87,7 +103,7 @@ medianmaxshare = nanmedian(Highest_Share);
 
 Block1         = [meaninvHH,medianinvHH,meanmaxshare,medianmaxshare];
 
-% Block #2: Table 1. Panel A. lower left column 
+% Block #2 
 
 meanshare      = nanmean(Share);
 sdshare        = nanstd(Share); 
@@ -96,19 +112,19 @@ ppshare        = prctile(Share,[75,95,99]);
 
 Block2         = [meanshare,sdshare,medianshare,ppshare];
 
-% Block #3: Table 1. Panel A. upper right column 
+% Block #3
 
-Sales_s        = sortrows(Sales_s',1);      % sort rows based on the first column
+Sales_s        = sortrows(Sales_s',1); 
     
 fRtopR1_s      = sum(Sales_s(end-floor(length(Sales_s)*0.01)+1:end,1))/sum(Sales_s(:,1));
 fRtopR5_s      = sum(Sales_s(end-floor(length(Sales_s)*0.05)+1:end,1))/sum(Sales_s(:,1));
 
-fRtopL1_s      = 0;
-fRtopL5_s      = 0;                             
+fRtopL1_s      = 0.105;  % note:- these numbers transcribed from Daniel's spreadsheet tables_moments_final
+fRtopL5_s      = 0.323;                             
 
 Block3         = [fRtopR1_s,fRtopR5_s,fRtopL1_s,fRtopL5_s];
 
-% Block #4: percentile number producers 
+% Block #4 
 
 ppndom         = prctile(Ndom,[10,25,50,75,90,95]); 
 
@@ -116,32 +132,32 @@ Block4         = [ppndom];
 
 % Block #5
     
-fRtopY1        = 0; 
-fRtopY5        = 0; 
+fRtopY1        = 0.413; % note:- these numbers transcribed from Daniel's spreadhseet tables_moments_final
+fRtopY5        = 0.647; 
 
-fRtopL1        = 0; 
-fRtopL5        = 0;                             
+fRtopL1        = 0.238; 
+fRtopL5        = 0.469;                             
  
 Block5         = [fRtopY1,fRtopY5,fRtopL1,fRtopL5];
 
 % Block #6 
 
-agg_fexporters = 0; 
-agg_impshare   = 0;
+agg_fexporters = 0.252; % note:-these numbers transcribed from Daniel's spreadsheet tables_moments_final
+agg_impshare   = 0.376;
 
-aweight        = 0;
-intraindex     = 0;
+aweight        = 0.622;
+intraindex     = 0.368;
 
-corr_export_domestic_shares = 0;
-corr_import_domestic_shares = 0; 
+corr_export_domestic_shares = 0.518;
+corr_import_domestic_shares = 0.498; 
 
-beta_import_domest_shares   = 0;
-beta_import_export_shares   = 0;
+beta_import_domest_shares   = 0.814;
+beta_import_export_shares   = 0.385;
 
 Block6         = [agg_fexporters,agg_impshare,aweight,intraindex,corr_export_domestic_shares,corr_import_domestic_shares,beta_import_domest_shares,beta_import_export_shares];
 
 
-% Block #7: distribution of subsample
+% Block #7
 
 mean90to10     = nanmean(Share90-Share10);
 median90to10   = nanmedian(Share90-Share10);
@@ -152,13 +168,13 @@ medianSDshare  = nanmedian(Sdshare);
 
 Block7         = [mean90to10,median90to10,mean75to25,median75to25,meanSDshare,medianSDshare];
 
-% Block #8: percentile inverse HH
+% Block #8
 
 ppindustryihh  = prctile(IndustryIHH,[10,25,50,75,90,95]); 
 
 Block8         = [ppindustryihh];
 
-% Block #9: percentile top share (across industries)
+% Block #9
 
 ppindustrytop  = prctile(IndustryTop,[10,25,50,75,90,95]); 
 
@@ -169,7 +185,7 @@ all_data_moments = [Block1,Block2,Block3,Block4,Block5,Block6,Block7,Block8,Bloc
 
 %  save data moments for future use (comment out as required)
 
-savefile = 'saved_data_moments.mat';
+savefile = 'saved_data_moments_march2015.mat';
 save(savefile,'all_data_moments');
 
 
